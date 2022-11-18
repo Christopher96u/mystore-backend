@@ -37,3 +37,4 @@ src/database/data-source.ts
 src/database/seeding-source.ts
 src/database/factories/categories/categories.factory.ts
 src/database/seeds/categories/categories.seeder.ts
+src/common/envs/development.env
