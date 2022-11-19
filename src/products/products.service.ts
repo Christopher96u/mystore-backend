@@ -1,8 +1,4 @@
-import {
-    BadRequestException,
-    Injectable,
-    NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CategoriesService } from '../categories/categories.service';
 import { DeleteResult, Repository } from 'typeorm';
@@ -18,55 +14,49 @@ export class ProductsService {
         private readonly categoriesService: CategoriesService,
     ) { }
     findAll(): Promise<Product[]> {
-        return this.productRepository.find({
-            relations: ['category'],
-        });
+
+        return this.productRepository.find({ relations: ['category'] });
     }
 
     async findOne(id: number): Promise<Product> {
-        const product = await this.productRepository.findOneBy({
-            id
+        const product = await this.productRepository.findOne({
+            where: { id },
+            relations: ['category'],
         });
         if (!product) {
             throw new NotFoundException(`Product with id #${id} not found`);
         }
+
         return product;
     }
-    async create(createProductDto: CreateProductDto): Promise<Product> {
+    async create(createProductDto: CreateProductDto) {
         const category = await this.categoriesService.findOne(
             createProductDto.categoryId,
         );
+        if (!category.isActive) {
+            throw new BadRequestException(`Category ${category.name} is not active`);
+        }
         const newProduct = this.productRepository.create(createProductDto);
         newProduct.category = category;
-        const response = this.productRepository
-            .save(newProduct)
-            .then((data) => {
-                return data;
-            })
-            .catch((error) => {
-                throw new BadRequestException(`${error.message || 'Unexpected Error'}`);
-            });
-        return response;
+
+        return this.productRepository.save(newProduct);
     }
-    async update(
-        id: number,
-        updateProductDto: UpdateProductDto,
-    ): Promise<Product> {
-        const currentProduct = await this.productRepository.findOneBy({ id });
-        if (updateProductDto.categoryId) {
-            const category = await this.categoriesService.findOne(
-                updateProductDto.categoryId,
-            );
-            currentProduct.category = category;
+    async update(id: number, updateProductDto: UpdateProductDto): Promise<Product> {
+        const storedProduct = await this.findOne(id);
+        if (updateProductDto.categoryId && updateProductDto.categoryId !== storedProduct.category.id) {
+            const category = await this.categoriesService.findOne(updateProductDto.categoryId);
+            storedProduct.category = category;
         }
-        this.productRepository.merge(currentProduct, updateProductDto);
-        return this.productRepository.save(currentProduct);
+        this.productRepository.merge(storedProduct, updateProductDto);
+
+        return this.productRepository.save(storedProduct);
     }
     async remove(id: number): Promise<DeleteResult> {
         const product = await this.productRepository.findOneBy({ id });
         if (!product) {
             throw new NotFoundException(`Product with id #${id} not found`);
         }
+
         return this.productRepository.delete(id);
     }
 }

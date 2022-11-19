@@ -20,7 +20,6 @@ export class CreateProductDto {
     @MinLength(5)
     readonly description: string;
 
-    // Price in cents
     @IsNumber()
     @IsPositive()
     readonly price: number;

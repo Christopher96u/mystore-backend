@@ -19,8 +19,7 @@ export class Product {
     @Column({ type: 'text' })
     description: string;
 
-    // Price in cents
-    @Column({ type: 'bigint' })
+    @Column({ type: 'float' })
     price: number;
 
     @Column({ type: 'int' })
@@ -29,7 +28,7 @@ export class Product {
     @Column({ type: 'boolean', default: true })
     isActive: boolean;
 
-    @Column({ type: 'varchar', length: 255 })
+    @Column({ type: 'varchar', length: 255, nullable: true })
     imageUrl: string;
 
     @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

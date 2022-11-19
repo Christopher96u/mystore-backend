@@ -1,18 +1,4 @@
-import {
-    Body,
-    Controller,
-    DefaultValuePipe,
-    Delete,
-    Get,
-    HttpException,
-    HttpStatus,
-    Param,
-    ParseIntPipe,
-    Post,
-    Put,
-    Query,
-} from '@nestjs/common';
-import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -47,7 +33,7 @@ export class CategoriesController {
     }
     @Post()
     create(@Body() createCategoryDto: CreateCategoryDto) {
-        //return this.categoriesService.create(createCategoryDto);
+        return this.categoriesService.create(createCategoryDto);
     }
 
     @Put(':id')

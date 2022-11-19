@@ -43,10 +43,7 @@ export class CategoriesService {
 
         return this.categoryRepository.save(newCategory);
     }
-    async update(
-        id: number,
-        updateCategoryDto: UpdateCategoryDto,
-    ): Promise<Category> {
+    async update(id: number, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
         const currentCategory = await this.categoryRepository.findOneBy({ id });
         this.categoryRepository.merge(currentCategory, updateCategoryDto);
 
