@@ -52,7 +52,7 @@ export class UsersService {
     await this.userRepository.update(id, { refreshToken });
   }
 
-  async removeRefreshToken(id: number): Promise<void> {
+  async removeRefreshToken(id: number): Promise<any> {
     await this.userRepository.update(id, { refreshToken: null });
   }
 
