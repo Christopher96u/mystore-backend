@@ -5,6 +5,7 @@ import * as argon2 from 'argon2';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
+import { UpdateResult } from 'typeorm';
 import { Role } from './roles/roles.enum';
 
 @Injectable()
@@ -26,7 +27,6 @@ export class AuthService {
         if (storedUser) {
             throw new BadRequestException('User already exists');
         }
-        // Hash password
         const hashedPassword = await this.hashData(createUserDto.password);
         // rewrite password field with hash
         const newUser = await this.usersService.create({
@@ -60,14 +60,14 @@ export class AuthService {
         await this.usersService.updateRefreshToken(userId, hashedRefreshToken);
     }
 
-    async refreshTokens(user: User) {
-        const tokens = await this.getTokens(user.id, user.email, user.roles);
+    async refreshTokens(user: User): Promise<Tokens> {
+        const tokens = await this.generateTokens(user.id, user.email, user.roles);
         await this.updateRefreshToken(user.id, tokens.refreshToken);
 
         return tokens;
     }
 
-    async getTokens(userId: number, email: string, roles: Role[]): Promise<Tokens> {
+    async generateTokens(userId: number, email: string, roles: Role[]): Promise<Tokens> {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(
                 {
@@ -100,15 +100,19 @@ export class AuthService {
     }
 
     async signIn(user: User): Promise<Tokens> {
-        // Generate tokens
-        const tokens = await this.getTokens(user.id, user.email, user.roles);
+        const tokens = await this.generateTokens(user.id, user.email, user.roles);
         await this.updateRefreshToken(user.id, tokens.refreshToken);
 
         return tokens;
     }
 
-    async logout(userId: number): Promise<void> {
+    async logout(userId: number): Promise<UpdateResult> {
 
-        return this.usersService.removeRefreshToken(userId);
+        const removedToken = await this.usersService.removeRefreshToken(userId);
+        if (!removedToken) {
+            throw new ForbiddenException('Refresh token not found');
+        }
+
+        return removedToken;
     }
 }

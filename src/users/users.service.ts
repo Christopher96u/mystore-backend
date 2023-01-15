@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -52,8 +52,9 @@ export class UsersService {
     await this.userRepository.update(id, { refreshToken });
   }
 
-  async removeRefreshToken(id: number): Promise<any> {
-    await this.userRepository.update(id, { refreshToken: null });
+  async removeRefreshToken(id: number): Promise<UpdateResult> {
+
+    return await this.userRepository.update(id, { refreshToken: null });
   }
 
   async remove(id: number): Promise<DeleteResult> {
