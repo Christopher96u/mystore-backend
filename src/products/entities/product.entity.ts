@@ -3,12 +3,18 @@ import {
     Column,
     CreateDateColumn,
     Entity,
+    JoinColumn,
     ManyToOne,
+    OneToMany,
+    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
+import { CartItem } from 'src/carts/entities/cart-item.entity';
+import { User } from 'src/users/entities/user.entity';
+import { Cart } from 'src/carts/entities/cart.entity';
 
-@Entity({ name: 'products' })
+@Entity()
 export class Product {
     @PrimaryGeneratedColumn()
     id: number;
@@ -21,6 +27,9 @@ export class Product {
 
     @Column({ type: 'float' })
     price: number;
+
+    @Column({ type: 'float', nullable: true, default: 0 })
+    discountRate: number;
 
     @Column({ type: 'int' })
     stock: number;
@@ -39,4 +48,7 @@ export class Product {
 
     @ManyToOne(() => Category, (category) => category.products)
     category: Category;
+
+    @OneToMany(() => CartItem, (cartItem) => cartItem.product)
+    cartItems: CartItem;
 }

@@ -34,6 +34,9 @@ export class ProductsService {
         if (!product) {
             throw new NotFoundException(`Product with id #${id} not found`);
         }
+        if (!product.isActive) {
+            throw new BadRequestException(`The product ${product.name} is not active`);
+        }
 
         return product;
     }

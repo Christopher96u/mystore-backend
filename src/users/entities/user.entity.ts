@@ -1,8 +1,10 @@
 import { Exclude } from "class-transformer";
 import { Role } from "src/auth/roles/roles.enum";
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Cart } from "src/carts/entities/cart.entity";
+import { Order } from "src/orders/entities/order.entity";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity({ name: 'users' })
+@Entity()
 export class User {
 
     @PrimaryGeneratedColumn()
@@ -19,10 +21,19 @@ export class User {
     password: string
 
     @Column({ type: 'varchar', nullable: true, default: null })
+    @Exclude()
     refreshToken: string
 
     @Column({ type: 'enum', array: true, enum: Role, default: [Role.USER] })
     roles: Role[]
+
+    @OneToMany(() => Cart, cart => cart.id, { nullable: true, eager: true })
+    @JoinColumn()
+    carts: Cart[]
+
+    @OneToMany(() => Order, order => order.id, { nullable: true, eager: true })
+    @JoinColumn()
+    orders: Order[]
 
     @Exclude()
     @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

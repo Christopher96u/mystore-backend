@@ -115,4 +115,9 @@ export class AuthService {
 
         return removedToken;
     }
+
+    async getCurrentUser(userId: number): Promise<User> {
+        //TODO: Probably we should move this logic to users.service.ts
+        return this.usersService.findOne(userId);
+    }
 }

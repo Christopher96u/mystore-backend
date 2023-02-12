@@ -9,6 +9,8 @@ import { ProductsModule } from './products/products.module';
 import { DatabaseModule } from 'src/database/database.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { CartsModule } from './carts/carts.module';
+import { OrdersModule } from './orders/orders.module';
 
 const envFilePath = getEnvPath(`${__dirname}/common/envs`);
 
@@ -30,6 +32,8 @@ const envFilePath = getEnvPath(`${__dirname}/common/envs`);
     ProductsModule,
     UsersModule,
     AuthModule,
+    CartsModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [

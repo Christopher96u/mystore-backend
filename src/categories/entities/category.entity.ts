@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
-@Entity({ name: 'categories' })
+@Entity()
 export class Category {
     @PrimaryGeneratedColumn()
     id: number;
