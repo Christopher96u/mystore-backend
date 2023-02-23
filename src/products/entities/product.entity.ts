@@ -13,11 +13,15 @@ import {
 import { CartItem } from 'src/carts/entities/cart-item.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Cart } from 'src/carts/entities/cart.entity';
+import { OrderItem } from 'src/orders/entities/order-item.entity';
 
 @Entity()
 export class Product {
     @PrimaryGeneratedColumn()
     id: number;
+
+    @Column({ type: 'integer', name: 'userId' })
+    userId: number;
 
     @Column({ type: 'varchar', length: 255 })
     name: string;
@@ -50,5 +54,16 @@ export class Product {
     category: Category;
 
     @OneToMany(() => CartItem, (cartItem) => cartItem.product)
-    cartItems: CartItem;
+    cartItems: CartItem[];
+
+    @OneToMany(() => OrderItem, (orderItem) => orderItem.product)
+    orderItems: OrderItem[];
+
+    @ManyToOne(() => User, (user) => user.products, {
+        onDelete: 'RESTRICT',
+        onUpdate: 'RESTRICT',
+    })
+    @JoinColumn([{ name: 'userId', referencedColumnName: 'id' }])
+    user: User;
+
 }

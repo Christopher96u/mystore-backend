@@ -13,14 +13,18 @@ export class Cart {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(() => User, (user) => user.carts)
+    @Column('integer', { name: 'userId', nullable: true })
+    userId: number;
+
+    @ManyToOne(() => User, (user) => user.carts, {
+        onDelete: 'RESTRICT',
+        onUpdate: 'RESTRICT',
+    })
+    @JoinColumn([{ name: 'userId', referencedColumnName: 'id' }])
     user: User;
 
     @OneToMany(() => CartItem, (cartItem) => cartItem.cart, { eager: true })
     cartItems: CartItem[];
-
-    @OneToOne(() => Order, order => order.cart)
-    order: Order;
 
     @Column({ type: 'enum', enum: CartStatus, default: CartStatus.CREATED })
     status: CartStatus;

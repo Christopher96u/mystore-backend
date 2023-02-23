@@ -15,12 +15,12 @@ export class CartsController {
     @Post()
     add(@Body() createCartItemDto: CreateCartItemDto, @Req() req: RequestWithUser) {
 
-        return this.cartService.add(createCartItemDto, req.user.id);
+        return this.cartService.addItem(createCartItemDto, req.user.id);
     }
 
     @Get()
-    findOne(@Req() req: RequestWithUser) {
+    findCurrentCart(@Req() req: RequestWithUser) {
 
-        return this.cartService.findOne(req.user.id);
+        return this.cartService.findCartByUserId(req.user.id);
     }
 }

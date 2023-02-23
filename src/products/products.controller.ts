@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { SkipAuth } from 'src/auth/decorators/skip-auth.decorator';
 import { Roles } from 'src/auth/roles/roles.decorator';
 import { Role } from 'src/auth/roles/roles.enum';
@@ -7,6 +7,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 import { JwtAuthenticationGuard } from 'src/auth/guards/jwt-authentication.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { RequestWithUser } from 'src/auth/interfaces/reques-with-user.interface';
 @Controller('products')
 @UseGuards(RolesGuard)
 @UseGuards(JwtAuthenticationGuard)
@@ -34,8 +35,9 @@ export class ProductsController {
     }
 
     @Post()
-    create(@Body() createProductDto: CreateProductDto) {
-        return this.productsService.create(createProductDto);
+    create(@Body() createProductDto: CreateProductDto, @Req() req: RequestWithUser) {
+        //TODO: Possibly, we can remove this parameter and remove the userId field from the table
+        return this.productsService.create(createProductDto, req.user.id);
     }
 
     @Put(':id')

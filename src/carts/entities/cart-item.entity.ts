@@ -10,16 +10,11 @@ export class CartItem {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(() => Cart, cart => cart.cartItems)
-    cart: Cart;
+    @Column('integer', { name: 'productId' })
+    productId: number;
 
-    @ManyToOne(() => Product, product => product.cartItems, {
-        cascade: true,
-
-        nullable: false,
-    })
-    @JoinColumn({ name: 'product_id', referencedColumnName: 'id' })
-    product: Product;
+    @Column('integer', { name: 'cartId' })
+    cartId: number;
 
     @Column({ type: 'float', default: 0 })
     quantity: number;
@@ -33,11 +28,23 @@ export class CartItem {
     @Column({ type: 'float', default: 0 })
     discountRate: number;
 
-    @Exclude()
     @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
 
-    @Exclude()
     @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     updatedAte: Date;
+
+    @ManyToOne(() => Cart, (cart) => cart.cartItems, {
+        onDelete: 'RESTRICT',
+        onUpdate: 'RESTRICT',
+    })
+    @JoinColumn([{ name: 'cartId', referencedColumnName: 'id' }])
+    cart: Cart;
+
+    @ManyToOne(() => Product, (product) => product.cartItems, {
+        onDelete: 'RESTRICT',
+        onUpdate: 'RESTRICT',
+    })
+    @JoinColumn([{ name: 'productId', referencedColumnName: 'id' }])
+    product: Product;
 }

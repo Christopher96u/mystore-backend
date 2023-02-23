@@ -2,6 +2,8 @@ import { Exclude } from "class-transformer";
 import { Role } from "src/auth/roles/roles.enum";
 import { Cart } from "src/carts/entities/cart.entity";
 import { Order } from "src/orders/entities/order.entity";
+import { Transaction } from "src/orders/entities/transaction.entity";
+import { Product } from "src/products/entities/product.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
@@ -27,13 +29,19 @@ export class User {
     @Column({ type: 'enum', array: true, enum: Role, default: [Role.USER] })
     roles: Role[]
 
-    @OneToMany(() => Cart, cart => cart.id, { nullable: true, eager: true })
-    @JoinColumn()
+    @OneToMany(() => Cart, cart => cart.user, { eager: true })
     carts: Cart[]
 
-    @OneToMany(() => Order, order => order.id, { nullable: true, eager: true })
-    @JoinColumn()
+    @OneToMany(() => Order, order => order.user)
     orders: Order[]
+
+    @OneToMany(() => Product, product => product.user)
+    //TODO: Probably we don't need this field/relationship
+    products: Product[]
+
+    @OneToMany(() => Transaction, (transaction) => transaction.user, { eager: true })
+    //TODO: Remove Eager true in the future, to avoid load the entity
+    transactions: Transaction[];
 
     @Exclude()
     @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

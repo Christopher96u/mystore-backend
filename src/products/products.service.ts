@@ -40,7 +40,7 @@ export class ProductsService {
 
         return product;
     }
-    async create(createProductDto: CreateProductDto) {
+    async create(createProductDto: CreateProductDto, userId: number): Promise<Product> {
         const category = await this.categoriesService.findOne(
             createProductDto.categoryId,
         );
@@ -48,7 +48,9 @@ export class ProductsService {
             throw new BadRequestException(`Category ${category.name} is not active`);
         }
         const newProduct = this.productRepository.create(createProductDto);
+        console.log('new product after create typeorm method', newProduct);
         newProduct.category = category;
+        newProduct.userId = userId;
 
         return this.productRepository.save(newProduct);
     }
