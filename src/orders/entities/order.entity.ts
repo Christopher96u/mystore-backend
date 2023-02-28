@@ -1,40 +1,21 @@
-import { Exclude } from 'class-transformer';
-import { Product } from 'src/products/entities/product.entity';
-import { Entity, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, OneToOne, PrimaryGeneratedColumn, JoinColumn, JoinTable, ManyToMany, OneToMany } from 'typeorm';
+import * as mongoose from 'mongoose';
+import { Cart } from "src/carts/entities/cart.entity";
+import { User } from "src/users/entities/user.entity";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
 
-import { User } from 'src/users/entities/user.entity';
-import { Cart } from 'src/carts/entities/cart.entity';
-import { OrderItem } from './order-item.entity';
-import { Transaction } from './transaction.entity';
+export type OrderDocument = HydratedDocument<Order>;
 
-
-@Entity()
+@Schema()
 export class Order {
-    //TODO: add order status ENUM, and add some fields to the order entity
-    @PrimaryGeneratedColumn()
-    id: number;
 
-    @Column('integer', { name: 'userId', nullable: true })
-    userId: number;
-
-    @Exclude()
-    @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date;
-
-    @Exclude()
-    @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    updatedAte: Date;
-
-    @ManyToOne(() => User, (user) => user.orders, {
-        onDelete: 'RESTRICT',
-        onUpdate: 'RESTRICT',
-    })
-    @JoinColumn([{ name: 'userId', referencedColumnName: 'id' }])
+    @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } })
     user: User;
 
-    @OneToMany(() => OrderItem, orderItem => orderItem.order)
-    orderItems: OrderItem[];
+    @Prop({ type: 'string', enum: ['PENDING', 'COMPLETED', 'CANCELLED'], default: 'PENDING' })
+    status: string;
 
-    @OneToMany(() => Transaction, transaction => transaction.order)
-    transactions: Transaction[];
+    @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'Cart' } })
+    cart: Cart;
 }
+export const OrderSchema = SchemaFactory.createForClass(Order);

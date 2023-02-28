@@ -1,51 +1,39 @@
-import { Exclude } from 'class-transformer';
-import { User } from 'src/users/entities/user.entity';
-import { Entity, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, OneToOne, PrimaryGeneratedColumn, OneToMany, JoinColumn } from 'typeorm';
-import { CartItem } from './cart-item.entity';
-import { CartStatus } from '../interfaces/cart-status.enum';
-import { Order } from 'src/orders/entities/order.entity';
-import { Product } from 'src/products/entities/product.entity';
 
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { HydratedDocument } from "mongoose";
 
-@Entity()
+import * as mongoose from 'mongoose';
+import { Order } from "src/orders/entities/order.entity";
+import { User } from "src/users/entities/user.entity";
+import { CartStatus } from "../interfaces/cart-status.enum";
+import { CartItem } from "./cart-item.entity";
+export type CartDocument = HydratedDocument<Cart>;
+
+@Schema()
 export class Cart {
-
-    @PrimaryGeneratedColumn()
-    id: number;
-
-    @Column('integer', { name: 'userId', nullable: true })
-    userId: number;
-
-    @ManyToOne(() => User, (user) => user.carts, {
-        onDelete: 'RESTRICT',
-        onUpdate: 'RESTRICT',
-    })
-    @JoinColumn([{ name: 'userId', referencedColumnName: 'id' }])
+    // Change to just store userId
+    @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } })
     user: User;
 
-    @OneToMany(() => CartItem, (cartItem) => cartItem.cart, { eager: true })
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CartItem' }] })
     cartItems: CartItem[];
 
-    @Column({ type: 'enum', enum: CartStatus, default: CartStatus.CREATED })
+    @Prop({ type: 'string', default: CartStatus.CREATED })
     status: CartStatus;
 
-    @Column({ type: 'float', default: 0 })
+    @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' } })
+    order: Order;
+
+    @Prop({ type: 'number', default: 0 })
     subTotalPrice: number;
 
-    @Column({ type: 'float', default: 0 })
+    @Prop({ type: 'number', default: 0 })
     totalTax: number;
 
-    @Column({ type: 'float', default: 0 })
+    @Prop({ type: 'number', default: 0 })
     discountVoucher: number;
 
-    @Column({ type: 'float', default: 0 })
+    @Prop({ type: 'number', default: 0 })
     totalPrice: number;
-
-    @Exclude()
-    @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date;
-
-    @Exclude()
-    @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    updatedAte: Date;
 }
+export const CartSchema = SchemaFactory.createForClass(Cart);

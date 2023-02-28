@@ -1,69 +1,36 @@
 import { Category } from '../../categories/entities/category.entity';
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToMany,
-    OneToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
-} from 'typeorm';
-import { CartItem } from 'src/carts/entities/cart-item.entity';
-import { User } from 'src/users/entities/user.entity';
-import { Cart } from 'src/carts/entities/cart.entity';
-import { OrderItem } from 'src/orders/entities/order-item.entity';
+import * as mongoose from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
 
-@Entity()
+export type ProductDocument = HydratedDocument<Product>;
+
+@Schema()
 export class Product {
-    @PrimaryGeneratedColumn()
-    id: number;
 
-    @Column({ type: 'integer', name: 'userId' })
-    userId: number;
-
-    @Column({ type: 'varchar', length: 255 })
+    @Prop()
     name: string;
 
-    @Column({ type: 'text' })
+    @Prop()
     description: string;
 
-    @Column({ type: 'float' })
+    @Prop({ type: 'decimal', precision: 5, scale: 2, default: 0 })
     price: number;
 
-    @Column({ type: 'float', nullable: true, default: 0 })
+    @Prop({ type: 'decimal', precision: 2, scale: 2, default: 0 })
     discountRate: number;
 
-    @Column({ type: 'int' })
+    @Prop({ type: 'number' })
     stock: number;
 
-    @Column({ type: 'boolean', default: true })
+    @Prop({ type: 'boolean', default: true })
     isActive: boolean;
 
-    @Column({ type: 'varchar', length: 255, nullable: true })
+    @Prop()
     imageUrl: string;
 
-    @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date;
-
-    @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    updatedAt: Date;
-
-    @ManyToOne(() => Category, (category) => category.products)
+    @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' } })
     category: Category;
-
-    @OneToMany(() => CartItem, (cartItem) => cartItem.product)
-    cartItems: CartItem[];
-
-    @OneToMany(() => OrderItem, (orderItem) => orderItem.product)
-    orderItems: OrderItem[];
-
-    @ManyToOne(() => User, (user) => user.products, {
-        onDelete: 'RESTRICT',
-        onUpdate: 'RESTRICT',
-    })
-    @JoinColumn([{ name: 'userId', referencedColumnName: 'id' }])
-    user: User;
-
 }
+
+export const ProductSchema = SchemaFactory.createForClass(Product);

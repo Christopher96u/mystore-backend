@@ -1,7 +1,7 @@
 import { CreateCategoryDto } from './create-category.dto';
-import { PartialType } from '@nestjs/mapped-types';
+import { PickType } from '@nestjs/mapped-types';
 import { IsBoolean } from 'class-validator';
-export class UpdateCategoryDto extends PartialType(CreateCategoryDto) {
+export class UpdateCategoryDto extends PickType(CreateCategoryDto, ['name', 'description', 'imageUrl']) {
     @IsBoolean()
     isActive: boolean;
 }

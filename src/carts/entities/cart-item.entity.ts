@@ -1,50 +1,27 @@
-import { Exclude } from 'class-transformer';
-import { Product } from 'src/products/entities/product.entity';
-import { Entity, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, OneToOne, PrimaryGeneratedColumn, JoinColumn } from 'typeorm';
-import { Cart } from './cart.entity';
 
 
-@Entity()
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { HydratedDocument } from "mongoose";
+
+import * as mongoose from 'mongoose';
+export type CartItemDocument = HydratedDocument<CartItem>;
+
+@Schema()
 export class CartItem {
 
-    @PrimaryGeneratedColumn()
-    id: number;
+    //@Column('objectid')
+    //cartId: ObjectID;
 
-    @Column('integer', { name: 'productId' })
-    productId: number;
-
-    @Column('integer', { name: 'cartId' })
-    cartId: number;
-
-    @Column({ type: 'float', default: 0 })
+    @Prop({ type: 'number' })
     quantity: number;
 
-    @Column({ type: 'float', default: 0 })
+    @Prop({ type: 'decimal', precision: 5, scale: 2 })
     price: number;
 
-    @Column({ type: 'float', default: 0 })
+    @Prop({ type: 'decimal', precision: 5, scale: 2, default: 0 })
     subTotalPrice: number;
 
-    @Column({ type: 'float', default: 0 })
+    @Prop({ type: 'decimal', precision: 2, scale: 2, default: 0 })
     discountRate: number;
-
-    @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date;
-
-    @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    updatedAte: Date;
-
-    @ManyToOne(() => Cart, (cart) => cart.cartItems, {
-        onDelete: 'RESTRICT',
-        onUpdate: 'RESTRICT',
-    })
-    @JoinColumn([{ name: 'cartId', referencedColumnName: 'id' }])
-    cart: Cart;
-
-    @ManyToOne(() => Product, (product) => product.cartItems, {
-        onDelete: 'RESTRICT',
-        onUpdate: 'RESTRICT',
-    })
-    @JoinColumn([{ name: 'productId', referencedColumnName: 'id' }])
-    product: Product;
 }
+export const CartItemSchema = SchemaFactory.createForClass(CartItem);

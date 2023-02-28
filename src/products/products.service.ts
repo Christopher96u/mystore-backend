@@ -1,21 +1,23 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CategoriesService } from '../categories/categories.service';
-import { DeleteResult, Like, Repository } from 'typeorm';
+import { DeleteResult, Like, ObjectID, Repository } from 'typeorm';
 
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Product } from './entities/product.entity';
+import { Product, ProductDocument } from './entities/product.entity';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 @Injectable()
 export class ProductsService {
     constructor(
-        @InjectRepository(Product)
-        private readonly productRepository: Repository<Product>,
-        private readonly categoriesService: CategoriesService,
+        @InjectModel(Product.name)
+        private readonly productRepository: Model<ProductDocument>,
     ) { }
-    findAll(): Promise<Product[]> {
 
-        return this.productRepository.find({ relations: ['category'] });
+    async findAll(): Promise<Product[]> {
+
+        return await this.productRepository.find();
     }
 
     async search(term: string): Promise<Product[]> {
@@ -26,9 +28,9 @@ export class ProductsService {
         });
     }
 
-    async findOne(id: number): Promise<Product> {
-        const product = await this.productRepository.findOne({
-            where: { id },
+    async findOne(id: ObjectID): Promise<Product | any> {
+        /* const product = await this.productRepository.findOne({
+            where: { _id: id },
             relations: ['category'],
         });
         if (!product) {
@@ -36,12 +38,13 @@ export class ProductsService {
         }
         if (!product.isActive) {
             throw new BadRequestException(`The product ${product.name} is not active`);
-        }
+        } */
 
-        return product;
+        return id;
     }
-    async create(createProductDto: CreateProductDto, userId: number): Promise<Product> {
-        const category = await this.categoriesService.findOne(
+    async create(createProductDto: CreateProductDto, userId: ObjectID): Promise<Product | any> {
+        return createProductDto;
+        /* const category = await this.categoriesService.findOne(
             createProductDto.categoryId,
         );
         if (!category.isActive) {
@@ -52,24 +55,25 @@ export class ProductsService {
         newProduct.category = category;
         newProduct.userId = userId;
 
-        return this.productRepository.save(newProduct);
+        return this.productRepository.save(newProduct); */
     }
-    async update(id: number, updateProductDto: UpdateProductDto): Promise<Product> {
-        const storedProduct = await this.findOne(id);
-        if (updateProductDto.categoryId && updateProductDto.categoryId !== storedProduct.category.id) {
-            const category = await this.categoriesService.findOne(updateProductDto.categoryId);
-            storedProduct.category = category;
-        }
-        this.productRepository.merge(storedProduct, updateProductDto);
-
-        return this.productRepository.save(storedProduct);
+    async update(id: ObjectID, updateProductDto: UpdateProductDto): Promise<Product | any> {
+        return updateProductDto;
+        /*  const storedProduct = await this.findOne(id);
+         if (updateProductDto.categoryId && updateProductDto.categoryId !== storedProduct.category._id) {
+             const category = await this.categoriesService.findOne(updateProductDto.categoryId);
+             storedProduct.category = category;
+         }
+         this.productRepository.merge(storedProduct, updateProductDto);
+ 
+         return this.productRepository.save(storedProduct); */
     }
-    async remove(id: number): Promise<DeleteResult> {
-        const product = await this.productRepository.findOneBy({ id });
+    async remove(id: ObjectID): Promise<DeleteResult | any> {
+        /* const product = await this.productRepository.findOneBy({ _id: id });
         if (!product) {
             throw new NotFoundException(`Product with id #${id} not found`);
         }
 
-        return this.productRepository.delete(id);
+        return this.productRepository.delete(id); */
     }
 }

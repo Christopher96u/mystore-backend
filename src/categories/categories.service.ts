@@ -5,54 +5,77 @@ import {
     NotFoundException,
     UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { DeleteResult, ObjectID } from 'typeorm';
 
-import { Category } from './entities/category.entity';
+import { Category, CategoryDocument } from './entities/category.entity';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { IPaginationOptions, paginate, Pagination } from 'nestjs-typeorm-paginate';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 @Injectable()
 export class CategoriesService {
     constructor(
-        @InjectRepository(Category)
-        private readonly categoryRepository: Repository<Category>,
+        @InjectModel(Category.name)
+        private readonly categoryModel: Model<CategoryDocument>,
     ) { }
 
-    async findAll(): Promise<Category[]> {
-        return this.categoryRepository.find();
+    async findAll(): Promise<CategoryDocument[]> {
+        //TODO: Add support to filter by isDeleted, isActive
+        return await this.categoryModel.find({ isDeleted: { $eq: false } });
     }
 
-    async paginate(options: IPaginationOptions): Promise<Pagination<Category>> {
-        return paginate<Category>(this.categoryRepository, options);
+    paginate(): void {
+        console.log('paginate feature');
     }
 
-    async findOne(id: number): Promise<Category> {
-        const category = await this.categoryRepository.findOneBy({ id });
+    async findOne(id: string): Promise<CategoryDocument> {
+        const category = await this.categoryModel.findOne({
+            _id: id,
+            isDeleted: { $ne: true }
+        });
         if (!category) {
             throw new NotFoundException(`Category with id #${id} not found`);
         }
         return category;
     }
-    async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
-        const category = await this.categoryRepository.findOneBy({ name: createCategoryDto.name });
+    async create(createCategoryDto: CreateCategoryDto): Promise<CategoryDocument> {
+        const category = await this.categoryModel.findOne({ name: createCategoryDto.name, isDeleted: { $ne: true } });
         if (category) {
             throw new BadRequestException(`Category with name ${createCategoryDto.name} already exists`);
         }
-        const newCategory = this.categoryRepository.create(createCategoryDto);
+        const newCategory = new this.categoryModel(createCategoryDto);
 
-        return this.categoryRepository.save(newCategory);
+        return await newCategory.save();
     }
-    async update(id: number, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
-        const currentCategory = await this.categoryRepository.findOneBy({ id });
-        this.categoryRepository.merge(currentCategory, updateCategoryDto);
+    async update(categoryId: string, updateCategoryDto: UpdateCategoryDto): Promise<CategoryDocument> {
+        const category = await this.categoryModel.findById(categoryId);
 
-        return this.categoryRepository.save(currentCategory);
+        if (!category) {
+            throw new NotFoundException(`Category with ID ${categoryId} not found`);
+        }
+
+        if (category.isDeleted) {
+            throw new BadRequestException(`Category with ID ${categoryId} is deleted`);
+        }
+
+        if (!category.isActive) {
+            throw new BadRequestException(`Category with ID ${categoryId} is inactive`);
+        }
+
+        const updatedCategory = await this.categoryModel.findByIdAndUpdate(categoryId, updateCategoryDto, { new: true });
+        if (!updatedCategory) {
+            throw new NotFoundException(`Category with id #${categoryId} not found`);
+        }
+
+        return updatedCategory;
     }
 
-    async remove(id: number): Promise<DeleteResult> {
-        await this.findOne(id);
+    async softDelete(id: string): Promise<void> {
 
-        return this.categoryRepository.delete(id);
+        await this.categoryModel.findByIdAndUpdate(id, { isDeleted: true });
+    }
+
+    async hardDelete(id: string): Promise<void> {
+        await this.categoryModel.findByIdAndRemove(id);
     }
 }

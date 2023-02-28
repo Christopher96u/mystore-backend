@@ -1,65 +1,82 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
+import { User, UserDocument } from './entities/user.entity';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>) { }
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>) { }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<UserDocument> {
+
     const user = await this.findByEmail(createUserDto.email);
     if (user) {
       throw new BadRequestException(`User with email ${createUserDto.email} already exists`);
     }
-    const newUser = this.userRepository.create(createUserDto);
+    const newUser = new this.userModel(createUserDto);
 
-    return this.userRepository.save(newUser);
+    return await newUser.save();
   }
 
-  findAll(): Promise<User[]> {
+  async signUp(createUserDto: CreateUserDto): Promise<UserDocument> {
+    const user = new this.userModel(createUserDto);
 
-    return this.userRepository.find();
+    return await user.save();
   }
 
-  async findOne(id: number): Promise<User> {
-    const user = await this.userRepository.findOneBy({ id });
+  async findAll(): Promise<UserDocument[]> {
+
+    return await this.userModel.find();
+  }
+
+  async findOne(userId: string): Promise<UserDocument> {
+    const user = await this.userModel.findById(userId);
     if (!user) {
-      throw new NotFoundException(`User with id #${id} not found`);
+      throw new NotFoundException(`User with id #${userId} not found`);
     }
 
     return user;
   }
 
-  async findByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findOneBy({ email });
+  async findByEmail(email: string): Promise<UserDocument> {
+    const user = await this.userModel.findOne({ email });
 
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const currentUser = await this.findOne(id);
-    this.userRepository.merge(currentUser, updateUserDto);
+  async update(userId: string, updateUserDto: UpdateUserDto): Promise<UserDocument> {
 
-    return this.userRepository.save(currentUser);
+    const updatedUser = await this.userModel.findByIdAndUpdate(userId, updateUserDto, { new: true });
+    if (!updatedUser) {
+      throw new NotFoundException(`User with id #${userId} not found`);
+    }
+
+    return updatedUser;
   }
 
-  async updateRefreshToken(id: number, refreshToken: string): Promise<void> {
-    await this.userRepository.update(id, { refreshToken });
+  async updateRefreshToken(id: string, refreshToken: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(id, { refreshToken });
   }
 
-  async removeRefreshToken(id: number): Promise<UpdateResult> {
-
-    return await this.userRepository.update(id, { refreshToken: null });
+  async removeRefreshToken(userId: string): Promise<void> {
+    const removedToken = await this.userModel.findByIdAndUpdate(userId, { refreshToken: null });
+    if (!removedToken) {
+      throw new NotFoundException(`User with id #${userId}, we couldnt remove your token, please try again later`);
+    }
   }
 
-  async remove(id: number): Promise<DeleteResult> {
-    await this.findOne(id);
+  async softDelete(id: string): Promise<void> {
 
-    return this.userRepository.delete(id);
+    await this.userModel.findByIdAndUpdate(id, { isDeleted: true });
   }
+
+  async hardDelete(id: string): Promise<void> {
+
+    await this.userModel.findByIdAndRemove(id);
+  }
+
 }

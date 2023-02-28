@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Cart } from './entities/cart.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ObjectID, Repository } from 'typeorm';
 import { CreateCartItemDto } from './dto/create-cart-item.dto';
 import { User } from 'src/users/entities/user.entity';
 import { CartStatus } from './interfaces/cart-status.enum';
@@ -14,32 +14,34 @@ import { ConfigService } from '@nestjs/config';
 export class CartsService {
     private TAX_RATE: number;
 
-    constructor(@InjectRepository(Cart) private readonly cartRepository: Repository<Cart>,
+    constructor(
+
+        /* @InjectRepository(Cart) private readonly cartRepository: Repository<Cart>,
         @InjectRepository(CartItem) private readonly cartItemRepository: Repository<CartItem>,
         @InjectRepository(User) private readonly userRepository: Repository<User>,
-        private readonly productsService: ProductsService,
+        private readonly productsService: ProductsService, */
         private configService: ConfigService
 
     ) {
         this.TAX_RATE = this.configService.get<number>('TAX_RATE');
     }
 
-    async findCartById(cartId: number): Promise<Cart | undefined> {
-        //TODO: Probably cartStatus as optional parameter if we'll need this method for other statuses
+    async findCartById(cartId: number): Promise<Cart | undefined | any> {
+        /* //TODO: Probably cartStatus as optional parameter if we'll need this method for other statuses
         const cart = this.cartRepository.findOne({ where: { id: cartId, status: CartStatus.CREATED }, relations: ['cartItems'] });
         if (!cart) {
             throw new NotFoundException(`Cart with id #${cartId} not found`);
         }
-        return cart;
+        return cart; */
     }
 
-    async findCartByUserId(userId: number): Promise<Cart | undefined> {
-        //TODO: Probably cartStatus as optional parameter if we'll need this method for other statuses
+    async findCartByUserId(userId: number): Promise<Cart | undefined | any> {
+        /* //TODO: Probably cartStatus as optional parameter if we'll need this method for other statuses
         const cart = this.cartRepository.findOne({ where: { user: { id: userId }, status: CartStatus.CREATED }, relations: ['cartItems'] });
         if (!cart) {
             throw new NotFoundException(`Cart with userId #${userId} not found`);
         }
-        return cart;
+        return cart; */
     }
     validateProduct(product: Product, createCartItemDto: CreateCartItemDto) {
         // Check if the product is active
@@ -58,7 +60,7 @@ export class CartsService {
     }
 
     calculatePriceWithTax(createCartItemDto: CreateCartItemDto, product: Product) {
-        // We calculate the subTotalPrice/totalPrice to use it in the cart and cartItem
+        // We calculate the subTotalPrice/totalPrice/totalTax to use it in the cart and cartItem
         const subTotalPrice = (createCartItemDto.quantity * product.price) - ((createCartItemDto.quantity * product.price * product.discountRate) / 100);
         const totalTax = subTotalPrice * this.TAX_RATE;
         const totalPrice = subTotalPrice + totalTax;
@@ -70,8 +72,9 @@ export class CartsService {
         }
     }
 
-    async createCartAndAddItem(createCartItemDto: CreateCartItemDto, userId: number, product: Product): Promise<Cart> {
-        // First case: cart doesn't exist in the db, so we create it
+    async createCartAndAddItem(createCartItemDto: CreateCartItemDto, userId: number, product: Product): Promise<Cart | any> {
+        return product;
+        /* // First case: cart doesn't exist in the db, so we create it
         // Adding subtotalPrice and totalPrice to the cart as zero, because we'll calculate it later
         const cart = this.cartRepository.create({
             userId,
@@ -80,7 +83,7 @@ export class CartsService {
         });
         //We save the cart to get the cartId, and then update the subTotalPrice and totalPrice from the cart
         const createdCart = await this.cartRepository.save(cart);
-        // We update the cart with the subTotalPrice and totalPrice
+        // We update the cart with the subTotalPrice,totalTax and totalPrice
         const { subTotalPrice, totalTax, totalPrice } = this.calculatePriceWithTax(createCartItemDto, product);
         createdCart.subTotalPrice = subTotalPrice;
         createdCart.totalTax = totalTax;
@@ -98,11 +101,12 @@ export class CartsService {
         });
         await this.cartItemRepository.save(newCartItem);
 
-        return await this.findCartById(createdCart.id);
+        return await this.findCartById(createdCart.id); */
     }
 
-    async updateCartAndCartItem(createCartItemDto: CreateCartItemDto, cart: Cart, product: Product): Promise<Cart> {
-        //Case: CartItem already exists in the cart, so we update the quantity, check the stock, and update the price if it changed
+    async updateCartAndCartItem(createCartItemDto: CreateCartItemDto, cart: Cart, product: Product): Promise<Cart | any> {
+        return product;
+        /* //Case: CartItem already exists in the cart, so we update the quantity, check the stock, and update the price if it changed
         //We just need the calculation of the subTotalPrice from the item because, there are more than one cartItem in the cart, so we need to recalculate the subTotalPrice/totalPrice
         const { subTotalPrice } = this.calculatePriceWithTax(createCartItemDto, product);
         const cartItem = await this.cartItemRepository.findOne({ where: { cartId: cart.id, productId: product.id } });
@@ -117,39 +121,41 @@ export class CartsService {
         const subTotalPriceCart = cartItemsDB.reduce((acc, cartItem) => acc + cartItem.subTotalPrice, 0);
         const totalTax = subTotalPriceCart * this.TAX_RATE;
         const totalPrice = subTotalPriceCart + totalTax;
-        // We update the cart with the subTotalPrice and totalPrice
+        // We update the cart with the subTotalPrice,totalTax and totalPrice
         cart.subTotalPrice = subTotalPriceCart;
         cart.totalTax = totalTax;
         cart.totalPrice = totalPrice;
         // We save the cart again with the updated fields
         await this.cartRepository.save(cart);
-        return await this.findCartById(cart.id);
+        return await this.findCartById(cart.id); */
     }
 
-    async updateCartAndAddCartItem(createCartItemDto: CreateCartItemDto, cart: Cart, product: Product): Promise<Cart> {
-        //Case:  CartItem doesn't exist in the cart, so we create it
-        // We update the cart with the subTotalPrice and totalPrice
-        const { subTotalPrice, totalTax, totalPrice } = this.calculatePriceWithTax(createCartItemDto, product);
-        cart.subTotalPrice = cart.subTotalPrice + subTotalPrice;
-        cart.totalTax = cart.totalTax + totalTax;
-        cart.totalPrice = cart.totalPrice + totalPrice;
-        // We save the cart again with the updated fields
-        await this.cartRepository.save(cart);
-        // After updating the cart, we create the cartItem to link it with the cart
-        const newCartItem = this.cartItemRepository.create({
-            productId: product.id,
-            cartId: cart.id,
-            quantity: createCartItemDto.quantity,
-            price: product.price,
-            discountRate: product.discountRate,
-            subTotalPrice
-        });
-        await this.cartItemRepository.save(newCartItem);
-        return await this.findCartById(cart.id);
+    async updateCartAndAddCartItem(createCartItemDto: CreateCartItemDto, cart: Cart, product: Product): Promise<Cart | any> {
+        return product;
+        /*  //Case:  CartItem doesn't exist in the cart, so we create it
+         // We update the cart with the subTotalPrice,totalTax and totalPrice
+         const { subTotalPrice, totalTax, totalPrice } = this.calculatePriceWithTax(createCartItemDto, product);
+         cart.subTotalPrice = cart.subTotalPrice + subTotalPrice;
+         cart.totalTax = cart.totalTax + totalTax;
+         cart.totalPrice = cart.totalPrice + totalPrice;
+         // We save the cart again with the updated fields
+         await this.cartRepository.save(cart);
+         // After updating the cart, we create the cartItem to link it with the cart
+         const newCartItem = this.cartItemRepository.create({
+             productId: product.id,
+             cartId: cart.id,
+             quantity: createCartItemDto.quantity,
+             price: product.price,
+             discountRate: product.discountRate,
+             subTotalPrice
+         });
+         await this.cartItemRepository.save(newCartItem);
+         return await this.findCartById(cart.id); */
     }
 
-    async addItem(createCartItemDto: CreateCartItemDto, userId: number): Promise<Cart> {
-        // Get the product from the db to check if it's available, stock, price changes, etc
+    async addItem(createCartItemDto: CreateCartItemDto, userId: ObjectID): Promise<Cart | any> {
+        return userId;
+        /* // Get the product from the db to check if it's available, stock, price changes, etc
         const product = await this.productsService.findOne(createCartItemDto.productId);
         let cart = await this.findCartByUserId(userId);
         // Validate the product
@@ -170,11 +176,12 @@ export class CartsService {
                 //Case:  CartItem doesn't exist in the cart, so we create it
                 return await this.updateCartAndAddCartItem(createCartItemDto, cart, product);
             }
-        }
+        } */
     }
 
-    async removeItem(cartItemId: number, userId: number): Promise<Cart> {
-        const cartItem = await this.cartItemRepository.findOne({ where: { id: cartItemId } });
+    async removeItem(cartItemId: ObjectID, userId: ObjectID): Promise<Cart | any> {
+        return userId;
+        /* const cartItem = await this.cartItemRepository.findOne({ where: { id: cartItemId } });
         if (!cartItem) {
             throw new NotFoundException(`Cart Item with id ${cartItemId} not found`);
         }
@@ -182,13 +189,13 @@ export class CartsService {
         if (!cart) {
             throw new NotFoundException(`Cart not found`);
         }
-        // We update the cart with the subTotalPrice and totalPrice
+        // We update the cart with the subTotalPrice,totalTax and totalPrice
         cart.subTotalPrice = cart.subTotalPrice - cartItem.subTotalPrice;
         cart.totalTax = cart.totalTax - (cartItem.subTotalPrice * this.TAX_RATE);
         cart.totalPrice = cart.totalPrice - (cartItem.subTotalPrice + (cartItem.subTotalPrice * this.TAX_RATE));
         // We save the cart again with the updated fields
         await this.cartRepository.save(cart);
         await this.cartItemRepository.delete(cartItemId);
-        return await this.findCartById(cart.id);
+        return await this.findCartById(cart.id); */
     }
 }

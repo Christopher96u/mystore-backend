@@ -1,8 +1,13 @@
 import { Module } from '@nestjs/common';
-import { Order } from './entities/order.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Order, OrderSchema } from './entities/order.entity';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Order])],
+    imports: [
+        MongooseModule.forFeature([{
+            name: Order.name,
+            schema: OrderSchema,
+        }]),
+    ],
 })
 export class OrdersModule { }

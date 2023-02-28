@@ -3,9 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { User } from 'src/users/entities/user.entity';
+import { User, UserDocument } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
-import { UpdateResult } from 'typeorm';
+import { ObjectID, UpdateResult } from 'typeorm';
 import { Role } from './roles/roles.enum';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class AuthService {
         return argon2.hash(data);
     }
 
-    async signUp(createUserDto: CreateUserDto): Promise<User> {
+    async signUp(createUserDto: CreateUserDto): Promise<UserDocument> {
         const storedUser = await this.usersService.findByEmail(
             createUserDto.email,
         );
@@ -29,7 +29,7 @@ export class AuthService {
         }
         const hashedPassword = await this.hashData(createUserDto.password);
         // rewrite password field with hash
-        const newUser = await this.usersService.create({
+        const newUser = await this.usersService.signUp({
             ...createUserDto,
             password: hashedPassword,
         });
@@ -42,7 +42,7 @@ export class AuthService {
         return argon2.verify(hashedValue, plainValue);
     }
 
-    async validateUser(email: string, password: string): Promise<User> {
+    async validateUser(email: string, password: string): Promise<UserDocument> {
         const user = await this.usersService.findByEmail(email);
         if (!user) {
             return null;
@@ -55,19 +55,19 @@ export class AuthService {
         return user;
     }
 
-    async updateRefreshToken(userId: number, refreshToken: string): Promise<void> {
+    async updateRefreshToken(userId: string, refreshToken: string): Promise<void> {
         const hashedRefreshToken = await this.hashData(refreshToken);
         await this.usersService.updateRefreshToken(userId, hashedRefreshToken);
     }
 
-    async refreshTokens(user: User): Promise<Tokens> {
+    async refreshTokens(user: UserDocument): Promise<Tokens> {
         const tokens = await this.generateTokens(user.id, user.email, user.roles);
         await this.updateRefreshToken(user.id, tokens.refreshToken);
 
         return tokens;
     }
 
-    async generateTokens(userId: number, email: string, roles: Role[]): Promise<Tokens> {
+    async generateTokens(userId: string, email: string, roles: Role[]): Promise<Tokens> {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(
                 {
@@ -99,25 +99,20 @@ export class AuthService {
         };
     }
 
-    async signIn(user: User): Promise<Tokens> {
+    async signIn(user: UserDocument): Promise<Tokens> {
         const tokens = await this.generateTokens(user.id, user.email, user.roles);
         await this.updateRefreshToken(user.id, tokens.refreshToken);
 
         return tokens;
     }
 
-    async logout(userId: number): Promise<UpdateResult> {
+    async logout(userId: string): Promise<void> {
 
-        const removedToken = await this.usersService.removeRefreshToken(userId);
-        if (!removedToken) {
-            throw new ForbiddenException('Refresh token not found');
-        }
-
-        return removedToken;
+        await this.usersService.removeRefreshToken(userId);
     }
 
-    async getCurrentUser(userId: number): Promise<User> {
-        //TODO: Probably we should move this logic to users.service.ts
+    async getCurrentUser(userId: string): Promise<UserDocument> {
+
         return this.usersService.findOne(userId);
     }
 }

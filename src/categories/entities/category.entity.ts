@@ -1,39 +1,32 @@
-import { Product } from '../../products/entities/product.entity';
-import {
-    Column,
-    PrimaryGeneratedColumn,
-    Entity,
-    CreateDateColumn,
-    UpdateDateColumn,
-    OneToMany,
-} from 'typeorm';
-import { Exclude } from 'class-transformer';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { HydratedDocument } from "mongoose";
 
-@Entity()
+export type CategoryDocument = HydratedDocument<Category>;
+
+@Schema({ timestamps: true })
 export class Category {
-    @PrimaryGeneratedColumn()
-    id: number;
 
-    @Column({ type: 'varchar', length: 255, unique: true })
+
+    @Prop()
     name: string;
 
-    @Column({ type: 'text' })
+    @Prop()
     description: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: true, default: null })
+    @Prop()
     imageUrl: string;
 
-    @Column({ type: 'boolean', default: true })
+    @Prop({ type: 'boolean', default: true })
     isActive: boolean;
 
-    @Exclude()
-    @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date;
-
-    @Exclude()
-    @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    updatedAte: Date;
-
-    @OneToMany(() => Product, (product) => product.category)
-    products: Product[];
+    @Prop({ type: 'boolean', default: false })
+    isDeleted: boolean;
 }
+export const CategorySchema = SchemaFactory.createForClass(Category).set('toJSON', {
+    transform: (doc, ret) => {
+        delete ret.__v;
+        delete ret.createdAt;
+        delete ret.updatedAt;
+        return ret;
+    }
+});

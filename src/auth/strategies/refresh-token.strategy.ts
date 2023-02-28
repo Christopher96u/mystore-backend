@@ -7,6 +7,7 @@ import { JWT } from '../interfaces/jwt.interface';
 import { AuthService } from '../auth.service';
 import { UsersService } from 'src/users/users.service';
 import { User } from 'src/users/entities/user.entity';
+import { ObjectID } from 'typeorm';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh-token') {

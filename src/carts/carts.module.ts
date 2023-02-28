@@ -1,16 +1,23 @@
 import { Module } from '@nestjs/common';
 import { CartsService } from './carts.service';
 import { CartsController } from './carts.controller';
-import { Cart } from './entities/cart.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { CartItem } from './entities/cart-item.entity';
-import { User } from 'src/users/entities/user.entity';
-import { Product } from 'src/products/entities/product.entity';
-import { ProductsModule } from 'src/products/products.module';
+import { Cart, CartSchema } from './entities/cart.entity';
+import { CartItem, CartItemSchema } from './entities/cart-item.entity';
+import { MongooseModule } from '@nestjs/mongoose';
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Cart, CartItem, User]), ProductsModule],
+  imports: [
+    MongooseModule.forFeature([{
+      name: Cart.name,
+      schema: CartSchema
+    },
+    {
+      name: CartItem.name,
+      schema: CartItemSchema
+    }
+    ]),
+  ],
   providers: [CartsService],
   controllers: [CartsController]
 })

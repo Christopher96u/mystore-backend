@@ -1,53 +1,48 @@
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Exclude } from "class-transformer";
+import { HydratedDocument } from "mongoose";
 import { Role } from "src/auth/roles/roles.enum";
 import { Cart } from "src/carts/entities/cart.entity";
-import { Order } from "src/orders/entities/order.entity";
-import { Transaction } from "src/orders/entities/transaction.entity";
-import { Product } from "src/products/entities/product.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-
-@Entity()
+import * as mongoose from 'mongoose';
+export type UserDocument = HydratedDocument<User>;
+@Schema({ timestamps: true })
 export class User {
 
-    @PrimaryGeneratedColumn()
-    id: number
-
-    @Column({ type: 'varchar', unique: true })
+    @Prop()
     email: string
 
-    @Column({ type: 'varchar' })
+    @Prop()
     name: string
 
-    @Column({ type: 'varchar' })
-    @Exclude()
+    @Prop()
     password: string
 
-    @Column({ type: 'varchar', nullable: true, default: null })
+    @Prop({ default: null })
     @Exclude()
     refreshToken: string
 
-    @Column({ type: 'enum', array: true, enum: Role, default: [Role.USER] })
+    @Prop({ type: [{ type: String, enum: Role }], default: [Role.USER] })
     roles: Role[]
 
-    @OneToMany(() => Cart, cart => cart.user, { eager: true })
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Cart' }] })
     carts: Cart[]
 
-    @OneToMany(() => Order, order => order.user)
-    orders: Order[]
+    @Prop({ type: 'boolean', default: false })
+    isDeleted: boolean
 
-    @OneToMany(() => Product, product => product.user)
-    //TODO: Probably we don't need this field/relationship
-    products: Product[]
+    @Prop({ type: 'boolean', default: true })
+    isActive: boolean
 
-    @OneToMany(() => Transaction, (transaction) => transaction.user, { eager: true })
-    //TODO: Remove Eager true in the future, to avoid load the entity
-    transactions: Transaction[];
+    //@Column()
+    //orders: Order[]
 
-    @Exclude()
-    @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date;
-
-    @Exclude()
-    @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    updatedAte: Date;
 }
+export const UserSchema = SchemaFactory.createForClass(User).set('toJSON', {
+    transform: (doc, ret) => {
+        delete ret.__v;
+        delete ret.password;
+        delete ret.createdAt;
+        delete ret.updatedAt;
+        return ret;
+    }
+});

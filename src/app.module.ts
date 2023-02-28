@@ -11,6 +11,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CartsModule } from './carts/carts.module';
 import { OrdersModule } from './orders/orders.module';
+import { CategoriesModule } from './categories/categories.module';
 
 const envFilePath = getEnvPath(`${__dirname}/common/envs`);
 
@@ -22,14 +23,12 @@ const envFilePath = getEnvPath(`${__dirname}/common/envs`);
       validationSchema: Joi.object({
         MODE: Joi.string().valid('dev', 'prod', 'example').required(),
         PORT: Joi.number().default(3000),
-        DB_PASSWORD: Joi.string().required(),
-        DB_PORT: Joi.number().required(),
-        DB_USER: Joi.string().required(),
-        DB_NAME: Joi.string().required(),
+        MONGO_URI: Joi.string().required(),
       }),
     }),
     DatabaseModule,
     ProductsModule,
+    CategoriesModule,
     UsersModule,
     AuthModule,
     CartsModule,

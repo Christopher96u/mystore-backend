@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -7,9 +7,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  //TODO: this method should be protected later and remove it from here
-  //TODO: DONT USE IT IN PRODUCTION
-  //TODO: the method works fine, but should be used just for singin up
+  //TODO: this method should be protected later and remove it from here, it's used in auth controller
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
@@ -22,17 +20,22 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  softDelete(@Param('id') id: string) {
+    return this.usersService.softDelete(id);
+  }
+
+  @Delete(':id/hard')
+  hardDelete(@Param('id') id: string) {
+    return this.usersService.hardDelete(id);
   }
 }

@@ -1,13 +1,11 @@
-import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { Pagination } from 'nestjs-typeorm-paginate';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { JwtAuthenticationGuard } from 'src/auth/guards/jwt-authentication.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/auth/roles/roles.decorator';
-import { Role } from 'src/auth/roles/roles.enum';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { Category } from './entities/category.entity';
+import { Role } from 'src/auth/roles/roles.enum';
+import { Roles } from 'src/auth/roles/roles.decorator';
 
 @Controller('categories')
 @UseGuards(RolesGuard)
@@ -15,27 +13,20 @@ import { Category } from './entities/category.entity';
 export class CategoriesController {
     constructor(private readonly categoriesService: CategoriesService) { }
     @Get()
-    //@Roles(Role.ADMIN)
+    @Roles(Role.USER)
     findAll() {
         return this.categoriesService.findAll();
 
     }
 
     @Get('/paginate')
-    async paginate(
-        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-        @Query('limit', new DefaultValuePipe(1), ParseIntPipe) limit: number = 1,
-    ): Promise<Pagination<Category>> {
-        limit = limit > 100 ? 100 : limit;
-        return this.categoriesService.paginate({
-            page,
-            limit,
-            route: '/categories/paginate',
-        });
+    //TODO: Add pagination support
+    paginate() {
+        console.log('paginate endpoint');
     }
 
     @Get(':id')
-    findOne(@Param('id', ParseIntPipe) id: number) {
+    findOne(@Param('id') id: string) {
 
         return this.categoriesService.findOne(id);
     }
@@ -47,14 +38,18 @@ export class CategoriesController {
     }
 
     @Put(':id')
-    update(@Param('id', ParseIntPipe) id: number, @Body() updateCategoryDto: UpdateCategoryDto) {
+    update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
 
         return this.categoriesService.update(id, updateCategoryDto);
     }
 
     @Delete(':id')
-    remove(@Param('id', ParseIntPipe) id: number) {
+    softDelete(@Param('id') id: string) {
+        return this.categoriesService.softDelete(id);
+    }
 
-        return this.categoriesService.remove(id);
+    @Delete(':id/hard')
+    hardDelete(@Param('id') id: string) {
+        return this.categoriesService.hardDelete(id);
     }
 }
