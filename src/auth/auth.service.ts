@@ -5,7 +5,6 @@ import * as argon2 from 'argon2';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
-import { ObjectID, UpdateResult } from 'typeorm';
 import { Role } from './roles/roles.enum';
 
 @Injectable()

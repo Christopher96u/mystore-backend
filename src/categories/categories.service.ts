@@ -1,12 +1,8 @@
 import {
     BadRequestException,
-    ForbiddenException,
     Injectable,
     NotFoundException,
-    UnauthorizedException,
 } from '@nestjs/common';
-import { DeleteResult, ObjectID } from 'typeorm';
-
 import { Category, CategoryDocument } from './entities/category.entity';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -77,5 +73,13 @@ export class CategoriesService {
 
     async hardDelete(id: string): Promise<void> {
         await this.categoryModel.findByIdAndRemove(id);
+    }
+
+    async isInactiveOrDeleted(id: string): Promise<boolean> {
+        const category = await this.categoryModel.findById(id);
+        if (category.isDeleted || !category.isActive) {
+            return true;
+        }
+        return false;
     }
 }

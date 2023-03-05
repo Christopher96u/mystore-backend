@@ -1,7 +1,4 @@
-
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
-
 import { Product, ProductSchema } from './entities/product.entity';
 import { CategoriesModule } from '../categories/categories.module';
 import { ProductsController } from './products.controller';
@@ -14,6 +11,7 @@ import { MongooseModule } from '@nestjs/mongoose';
             name: Product.name,
             schema: ProductSchema
         }]),
+        CategoriesModule
     ],
     controllers: [ProductsController],
     providers: [ProductsService],

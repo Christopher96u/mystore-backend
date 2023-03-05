@@ -1,8 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CategoriesService } from '../categories/categories.service';
-import { DeleteResult, Like, ObjectID, Repository } from 'typeorm';
-
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product, ProductDocument } from './entities/product.entity';
@@ -12,68 +9,67 @@ import { Model } from 'mongoose';
 export class ProductsService {
     constructor(
         @InjectModel(Product.name)
-        private readonly productRepository: Model<ProductDocument>,
+        private readonly productModel: Model<ProductDocument>,
+        private readonly categoriesService: CategoriesService,
     ) { }
 
-    async findAll(): Promise<Product[]> {
+    async findAll(): Promise<ProductDocument[]> {
+        //TODO: Add support to optional filter by isDeleted, isActive, etc
 
-        return await this.productRepository.find();
+        return await this.productModel.find({ isActive: { $eq: true }, isDeleted: { $eq: false } }).populate('category');
     }
 
-    async search(term: string): Promise<Product[]> {
+    async search(term: string): Promise<ProductDocument[] | any> {
 
-        return this.productRepository.find({
-            relations: ['category'],
-            where: { name: Like(`%${term}%`) }
-        });
+        console.log('term', term);
     }
 
-    async findOne(id: ObjectID): Promise<Product | any> {
-        /* const product = await this.productRepository.findOne({
-            where: { _id: id },
-            relations: ['category'],
+    async findOne(id: string): Promise<ProductDocument> {
+
+        const product = await this.productModel.findOne({
+            _id: id,
+            isActive: { $eq: true },
+            isDeleted: { $eq: false }
         });
         if (!product) {
             throw new NotFoundException(`Product with id #${id} not found`);
         }
-        if (!product.isActive) {
-            throw new BadRequestException(`The product ${product.name} is not active`);
-        } */
-
-        return id;
+        return product;
     }
-    async create(createProductDto: CreateProductDto, userId: ObjectID): Promise<Product | any> {
-        return createProductDto;
-        /* const category = await this.categoriesService.findOne(
-            createProductDto.categoryId,
-        );
-        if (!category.isActive) {
-            throw new BadRequestException(`Category ${category.name} is not active`);
+    async create(createProductDto: CreateProductDto): Promise<ProductDocument> {
+
+        const categoryIsInactiveOrDeleted = await this.categoriesService.isInactiveOrDeleted(createProductDto.categoryId);
+        if (categoryIsInactiveOrDeleted) {
+            throw new BadRequestException(`Category with id #${createProductDto.categoryId} is inactive or deleted`);
         }
-        const newProduct = this.productRepository.create(createProductDto);
-        console.log('new product after create typeorm method', newProduct);
-        newProduct.category = category;
-        newProduct.userId = userId;
+        const product = await this.productModel.findOne({ name: createProductDto.name });
+        if (product) {
+            throw new BadRequestException(`Product with name ${createProductDto.name} already exists`);
+        }
+        const newProduct = new this.productModel(createProductDto);
 
-        return this.productRepository.save(newProduct); */
+        return await newProduct.save();
     }
-    async update(id: ObjectID, updateProductDto: UpdateProductDto): Promise<Product | any> {
-        return updateProductDto;
-        /*  const storedProduct = await this.findOne(id);
-         if (updateProductDto.categoryId && updateProductDto.categoryId !== storedProduct.category._id) {
-             const category = await this.categoriesService.findOne(updateProductDto.categoryId);
-             storedProduct.category = category;
-         }
-         this.productRepository.merge(storedProduct, updateProductDto);
- 
-         return this.productRepository.save(storedProduct); */
-    }
-    async remove(id: ObjectID): Promise<DeleteResult | any> {
-        /* const product = await this.productRepository.findOneBy({ _id: id });
-        if (!product) {
+    async update(id: string, updateProductDto: UpdateProductDto): Promise<ProductDocument> {
+        const categoryIsInactiveOrDeleted = await this.categoriesService.isInactiveOrDeleted(updateProductDto.categoryId);
+        if (categoryIsInactiveOrDeleted) {
+            // Probably, remove this validation, because we should be able to update a product, and mark as optional the categoryId in the DTO
+            throw new BadRequestException(`Category with id #${updateProductDto.categoryId} is inactive or deleted`);
+        }
+        const updatedProduct = await this.productModel.findOneAndUpdate({ _id: id }, { ...updateProductDto, category: updateProductDto.categoryId }, { new: true });
+        if (!updatedProduct) {
             throw new NotFoundException(`Product with id #${id} not found`);
         }
 
-        return this.productRepository.delete(id); */
+        return updatedProduct;
+    }
+
+    async softDelete(id: string): Promise<void> {
+
+        await this.productModel.findByIdAndUpdate(id, { isDeleted: true });
+    }
+
+    async hardDelete(id: string): Promise<void> {
+        await this.productModel.findByIdAndRemove(id);
     }
 }

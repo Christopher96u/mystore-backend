@@ -27,6 +27,7 @@ export const CategorySchema = SchemaFactory.createForClass(Category).set('toJSON
         delete ret.__v;
         delete ret.createdAt;
         delete ret.updatedAt;
+        delete ret.isDeleted;
         return ret;
     }
 });

@@ -5,7 +5,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type ProductDocument = HydratedDocument<Product>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Product {
 
     @Prop()
@@ -14,10 +14,10 @@ export class Product {
     @Prop()
     description: string;
 
-    @Prop({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+    @Prop({ type: 'number', default: 0 })
     price: number;
 
-    @Prop({ type: 'decimal', precision: 2, scale: 2, default: 0 })
+    @Prop({ type: 'number', default: 0 })
     discountRate: number;
 
     @Prop({ type: 'number' })
@@ -26,11 +26,22 @@ export class Product {
     @Prop({ type: 'boolean', default: true })
     isActive: boolean;
 
+    @Prop({ type: 'boolean', default: false })
+    isDeleted: boolean;
+
     @Prop()
     imageUrl: string;
 
-    @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' } })
-    category: Category;
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Category' })
+    category: Category | mongoose.Types.ObjectId;
 }
 
-export const ProductSchema = SchemaFactory.createForClass(Product);
+export const ProductSchema = SchemaFactory.createForClass(Product).set('toJSON', {
+    transform: (doc, ret) => {
+        delete ret.__v;
+        delete ret.createdAt;
+        delete ret.updatedAt;
+        delete ret.isDeleted;
+        return ret;
+    }
+});

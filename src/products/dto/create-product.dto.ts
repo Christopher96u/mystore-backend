@@ -32,8 +32,7 @@ export class CreateProductDto {
     @IsOptional()
     readonly imageUrl?: string;
 
-    @IsNumber()
-    @IsPositive()
+    @IsString()
     @IsNotEmpty()
-    readonly categoryId: number;
+    readonly categoryId: string;
 }
