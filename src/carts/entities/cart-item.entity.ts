@@ -6,22 +6,35 @@ import { HydratedDocument } from "mongoose";
 import * as mongoose from 'mongoose';
 export type CartItemDocument = HydratedDocument<CartItem>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class CartItem {
 
     //@Column('objectid')
     //cartId: ObjectID;
 
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Product' })
+    productId: mongoose.Types.ObjectId | string;
+
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Cart' })
+    cartId: mongoose.Types.ObjectId | string;
+
     @Prop({ type: 'number' })
     quantity: number;
 
-    @Prop({ type: 'decimal', precision: 5, scale: 2 })
+    @Prop({ type: 'number' })
     price: number;
 
-    @Prop({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+    @Prop({ type: 'number' })
     subTotalPrice: number;
 
-    @Prop({ type: 'decimal', precision: 2, scale: 2, default: 0 })
+    @Prop({ type: 'number' })
     discountRate: number;
 }
-export const CartItemSchema = SchemaFactory.createForClass(CartItem);
+export const CartItemSchema = SchemaFactory.createForClass(CartItem).set('toJSON', {
+    transform: (doc, ret) => {
+        delete ret.__v;
+        delete ret.createdAt;
+        delete ret.updatedAt;
+        return ret;
+    }
+});;

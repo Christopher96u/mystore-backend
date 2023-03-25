@@ -16,18 +16,18 @@ export class CartsController {
     @Post()
     add(@Body() createCartItemDto: CreateCartItemDto, @Req() req: RequestWithUser) {
 
-        // return this.cartService.addItem(createCartItemDto, req.user.id);
+        return this.cartService.addItem(createCartItemDto, req.user.id);
     }
 
     @Get()
     findCurrentCart(@Req() req: RequestWithUser) {
 
-        //return this.cartService.findCartByUserId(req.user.id);
+        return this.cartService.getCurrentCartByUserId(req.user.id);
     }
 
     @Delete()
     removeItem(@Body() removeCartItemDto: RemoveCartItemDto, @Req() req: RequestWithUser) {
 
-        //return this.cartService.removeItem(removeCartItemDto.cartItemId, req.user.id);
+        return this.cartService.removeItem(removeCartItemDto.cartItemId, req.user.id);
     }
 }

@@ -6,22 +6,22 @@ import * as mongoose from 'mongoose';
 import { Order } from "src/orders/entities/order.entity";
 import { User } from "src/users/entities/user.entity";
 import { CartStatus } from "../interfaces/cart-status.enum";
-import { CartItem } from "./cart-item.entity";
+import { CartItem, CartItemDocument } from "./cart-item.entity";
 export type CartDocument = HydratedDocument<Cart>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Cart {
     // Change to just store userId
-    @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } })
-    user: User;
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+    user: User | mongoose.Types.ObjectId;
 
-    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CartItem' }] })
-    cartItems: CartItem[];
+    @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'CartItem' }])
+    cartItems: CartItemDocument[];
 
     @Prop({ type: 'string', default: CartStatus.CREATED })
     status: CartStatus;
 
-    @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' } })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Order' })
     order: Order;
 
     @Prop({ type: 'number', default: 0 })
@@ -35,5 +35,16 @@ export class Cart {
 
     @Prop({ type: 'number', default: 0 })
     totalPrice: number;
+
+    @Prop({ type: 'boolean', default: false })
+    isDeleted: boolean;
 }
-export const CartSchema = SchemaFactory.createForClass(Cart);
+export const CartSchema = SchemaFactory.createForClass(Cart).set('toJSON', {
+    transform: (doc, ret) => {
+        delete ret.__v;
+        delete ret.createdAt;
+        delete ret.updatedAt;
+        delete ret.isDeleted;
+        return ret;
+    }
+});
